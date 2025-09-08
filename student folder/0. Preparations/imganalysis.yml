@@ -1,0 +1,15 @@
+name: imganalysis
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.12
+  - jupyter
+  - matplotlib
+  - scikit-image
+  - pandas
+  - numpy
+  - seaborn
+  - scipy
+  - tifffile
+  - json
