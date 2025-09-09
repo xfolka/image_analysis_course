@@ -2,20 +2,26 @@ import pandas as pd
 import numpy as np
 #import matplotlib.pyplot as plt
 from skimage import io
+from datetime import datetime
 
 import os
 
 # Load dataset
 #df = pd.read_csv("tests/bacteria_drug_experiment_separated.csv")
-df = pd.read_csv("tests/bacterial_colony_radii_40replicates_with_area.csv")
+df = pd.read_csv("tests/bacterial_colonies_area_gaussian_radius_clustered_40rep.csv")
 
 # Output folder
 #output_dir = "student folder/1. exercises/data/bacteria"
-output_dir = "tests/bacteria_images"
+# Get current date and time
+now = datetime.now()
+
+# Format it as a string
+timestamp_str = now.strftime("%Y-%m-%d_%H_%M_%S")
+output_dir = "tests/bacteria_images" + "_" + timestamp_str
 os.makedirs(output_dir, exist_ok=True)
 
 # Image size
-img_size = 1024
+img_size =720
 
 # Function to draw an irregular colony
 def draw_colony(img, center, base_radius, intensity=0.7):
@@ -25,7 +31,21 @@ def draw_colony(img, center, base_radius, intensity=0.7):
         r = base_radius
         y, x = np.ogrid[:img.shape[0], :img.shape[1]]
         mask = (x - cx)**2 + (y - cy)**2 <= r**2
-        img[mask] = intensity
+        img[mask] = intensity + np.random.normal(-0.02, 0.09)
+        return img
+
+def circle_array(img, center, radius, filled=False):
+    # Define image size (make it large enough to contain the circle)
+    size = radius * 2 + 1
+    y, x = np.ogrid[-radius:radius+1, -radius:radius+1]
+    
+    # Equation of a circle
+    mask = x**2 + y**2 <= radius**2 if filled else np.isclose(x**2 + y**2, radius**2, atol=radius*0.5)
+    
+    # Create an array (0 = black, 1 = white)
+    img = np.zeros((size, size), dtype=np.uint8)
+    img[mask] = 255
+    
     return img
 
 # Function to draw an irregular colony
@@ -52,8 +72,8 @@ def place_colonies(radii, img_size, margin=40, max_attempts=2000):
 
 # Function to generate uneven lighting
 def uneven_lighting(img_size):
-    gradient_x = np.tile(np.linspace(0.7, 1.5, img_size), (img_size, 1))
-    gradient_y = np.tile(np.linspace(0.8, 0.9, img_size), (img_size, 1)).T
+    gradient_x = np.tile(np.linspace(0.7, 0.92, img_size), (img_size, 1))
+    gradient_y = np.tile(np.linspace(0.75, 0.92, img_size), (img_size, 1)).T
     return gradient_x * gradient_y
 
 # Function to add salt & pepper noise
@@ -90,7 +110,7 @@ for (b, d), group in df.groupby(["bacteria", "drug"]):
     
     # Draw irregular colonies
     for x, y, r in colonies:
-        img = draw_irregular_colony(img, (x, y), r, intensity=0.5, irregularity=0.40)
+        img = draw_colony(img, (x, y), r, intensity=0.995)
     
     # Add Gaussian noise
     noise = np.random.normal(0, 0.05, img.shape)
